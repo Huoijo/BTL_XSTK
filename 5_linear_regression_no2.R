@@ -135,6 +135,35 @@ legend("bottomright",
 dev.off()
 cat("\n[!] ROC curve saved to: roc_curve_aspect_ratio.png\n")
 
+# Compare ROC Curves
+png("roc_comparison_final.png", width = 900, height = 700, res = 120)
+
+plot(roc_width$fpr, roc_width$tpr, 
+     type = "l", col = "#009E73", lwd = 3,
+     xlab = "False Positive Rate (1 - Specificity)",
+     ylab = "True Positive Rate (Sensitivity)",
+     main = "ROC Curves Comparison",
+     xlim = c(0, 1), ylim = c(0, 1))
+
+lines(roc_ratio$fpr, roc_ratio$tpr, col = "#D55E00", lwd = 3)
+
+abline(a = 0, b = 1, lty = 2, col = "gray", lwd = 2)
+grid(col = "lightgray", lty = 3)
+
+text(0.55, 0.35, paste("AUC (Width) =", round(roc_width$auc, 4)), 
+     cex = 1.2, col = "#009E73", font = 2, adj = 0)
+text(0.55, 0.25, paste("AUC (Aspect Ratio) =", round(roc_ratio$auc, 4)), 
+     cex = 1.2, col = "#D55E00", font = 2, adj = 0)
+
+legend("bottomright",
+       legend = c("Model 1W (Width)", "Model 2 (Aspect Ratio)", "Random Classifier"),
+       col = c("#009E73", "#D55E00", "gray"),
+       lty = c(1, 1, 2), lwd = c(3, 3, 2),
+       bty = "n", cex = 1.1)
+
+dev.off()
+cat("\n[!] Combined ROC curves saved to: roc_comparison_final.png\n")
+
 # MODEL COMPARISON
 
 cat("\n", paste(rep("=", 60), collapse = ""), "\n")
