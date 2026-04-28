@@ -1,3 +1,6 @@
+if (!require("ggplot2")) install.packages("ggplot2")
+library(ggplot2)
+
 calculate_roc <- function(actual, predictions) {
   valid <- complete.cases(actual, predictions)
   actual <- actual[valid]
@@ -107,62 +110,71 @@ if (all(dim(conf_opt_r) == c(2,2))) {
   cat("Precision:", round(tp_r/(tp_r+fp_r), 4), "\n")
 }
 
-# ROC Curve for Model 2
-png("roc_curve_aspect_ratio.png", width = 900, height = 700, res = 120)
+# Create a data frame for Model 2 ROC plotting
+df_roc_ratio <- data.frame(
+  fpr = roc_ratio$fpr,
+  tpr = roc_ratio$tpr
+)
 
-plot(roc_ratio$fpr, roc_ratio$tpr, 
-     type = "l", col = "#2E86C1", lwd = 3,
-     xlab = "False Positive Rate (1 - Specificity)",
-     ylab = "True Positive Rate (Sensitivity)",
-     main = "ROC Curve - Aspect Ratio Model",
-     xlim = c(0, 1), ylim = c(0, 1))
+# Generate the plot
+roc_plot_ratio <- ggplot(df_roc_ratio, aes(x = fpr, y = tpr)) +
+  geom_line(color = "#D55E00", linewidth = 1.3) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray60") +
+  annotate("text", x = 0.68, y = 0.25, 
+           label = paste("AUC =", round(roc_ratio$auc, 4)), 
+           color = "#D55E00", size = 5, fontface = "bold") +
+  # Using annotate("point", ...) to prevent length warnings
+  annotate("point", x = roc_ratio$fpr[opt_idx_r], y = roc_ratio$tpr[opt_idx_r], 
+           color = "#E74C3C", size = 3) +
+  labs(
+    title = "ROC Curve - Aspect Ratio Model",
+    x = "False Positive Rate (1 - Specificity)",
+    y = "True Positive Rate (Sensitivity)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 
-abline(a = 0, b = 1, lty = 2, col = "gray", lwd = 2)
-grid(col = "lightgray", lty = 3)
-text(0.68, 0.25, paste("AUC =", round(roc_ratio$auc, 4)), 
-     cex = 1.4, col = "#2E86C1", font = 2)
-
-# Optimal Threshold point
-points(roc_ratio$fpr[opt_idx_r], roc_ratio$tpr[opt_idx_r], 
-       col = "#E74C3C", pch = 19, cex = 2)
-
-legend("bottomright",
-       legend = c("Aspect Ratio Model", "Random Classifier", "Optimal Threshold"),
-       col = c("#2E86C1", "gray", "#E74C3C"),
-       lty = c(1, 2, NA), pch = c(NA, NA, 19), lwd = c(3, 2, NA),
-       bty = "n", cex = 1.1)
-
-dev.off()
+# Save the plot as an image
+print(roc_plot_ratio)
+ggsave("roc_curve_aspect_ratio.png", plot = roc_plot_ratio, width = 7.5, height = 5.8, dpi = 120)
 cat("\n[!] ROC curve saved to: roc_curve_aspect_ratio.png\n")
 
-# Compare ROC Curves
-png("roc_comparison_final.png", width = 900, height = 700, res = 120)
+# Create a combined data frame containing coordinates of both models
+roc_df <- data.frame(
+  fpr = c(roc_width$fpr, roc_ratio$fpr),
+  tpr = c(roc_width$tpr, roc_ratio$tpr),
+  Model = factor(rep(
+    c("Model 1W (Width)", "Model 2 (Aspect Ratio)"),
+    times = c(length(roc_width$fpr), length(roc_ratio$fpr))
+  ))
+)
 
-plot(roc_width$fpr, roc_width$tpr, 
-     type = "l", col = "#009E73", lwd = 3,
-     xlab = "False Positive Rate (1 - Specificity)",
-     ylab = "True Positive Rate (Sensitivity)",
-     main = "ROC Curves Comparison",
-     xlim = c(0, 1), ylim = c(0, 1))
+# Generate the combined plot using ggplot2
+combined_plot <- ggplot(roc_df, aes(x = fpr, y = tpr, color = Model)) +
+  geom_line(linewidth = 1.3) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray60") +
+  scale_color_manual(values = c("#009E73", "#D55E00")) + # Teal for Width, Orange for Aspect Ratio
+  annotate("text", x = 0.55, y = 0.35, 
+           label = paste("AUC (Width) =", round(roc_width$auc, 4)), 
+           color = "#009E73", size = 4.5, fontface = "bold", hjust = 0) +
+  annotate("text", x = 0.55, y = 0.25, 
+           label = paste("AUC (Aspect Ratio) =", round(roc_ratio$auc, 4)), 
+           color = "#D55E00", size = 4.5, fontface = "bold", hjust = 0) +
+  labs(
+    title = "Combined ROC Curves for 2 Logistic Regression Models",
+    x = "False Positive Rate",
+    y = "True Positive Rate"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    legend.position = "bottom"
+  )
 
-lines(roc_ratio$fpr, roc_ratio$tpr, col = "#D55E00", lwd = 3)
-
-abline(a = 0, b = 1, lty = 2, col = "gray", lwd = 2)
-grid(col = "lightgray", lty = 3)
-
-text(0.55, 0.35, paste("AUC (Width) =", round(roc_width$auc, 4)), 
-     cex = 1.2, col = "#009E73", font = 2, adj = 0)
-text(0.55, 0.25, paste("AUC (Aspect Ratio) =", round(roc_ratio$auc, 4)), 
-     cex = 1.2, col = "#D55E00", font = 2, adj = 0)
-
-legend("bottomright",
-       legend = c("Model 1W (Width)", "Model 2 (Aspect Ratio)", "Random Classifier"),
-       col = c("#009E73", "#D55E00", "gray"),
-       lty = c(1, 1, 2), lwd = c(3, 3, 2),
-       bty = "n", cex = 1.1)
-
-dev.off()
-cat("\n[!] Combined ROC curves saved to: roc_comparison_final.png\n")
+# Display and save the combined plot
+print(combined_plot)
+ggsave("roc_comparison_final.png", plot = combined_plot, width = 8, height = 6, dpi = 120)
+cat("[!] Combined ROC curves saved to: roc_comparison_final.png\n")
 
 # MODEL COMPARISON
 
