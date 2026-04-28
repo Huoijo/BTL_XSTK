@@ -22,7 +22,7 @@ test_data  <- data[-train_idx, ]
 # Rebuild Model 1 (Width) from Member 1 to obtain metrics for comparison
 model1 <- glm(IsAds ~ Width, data = train_data, family = binomial) #NEED FIX
 
-# [MAIN TASK] Train Model 2 using Aspect Ratio
+# Train Model 2 using Aspect Ratio
 model2 <- glm(IsAds ~ Aspect_Ratio, data = train_data, family = binomial)
 
 # 4. FIND OPTIMAL THRESHOLDS AND MAKE PREDICTIONS
@@ -59,9 +59,7 @@ auc2 <- as.numeric(auc(roc2))
 aic1 <- AIC(model1)
 aic2 <- AIC(model2)
 
-# =====================================================================
-# [MAIN TASK] COMPARE AND CONCLUDE THE BETTER MODEL
-# =====================================================================
+# COMPARE AND CONCLUDE THE BETTER MODEL
 cat("\n=== PERFORMANCE COMPARISON (MEMBER 2) ===\n")
 cat(sprintf("%-18s | %-10s | %-10s | %-10s\n", "Model", "Accuracy", "AUC", "AIC"))
 cat("----------------------------------------------------------\n")
@@ -79,9 +77,7 @@ if(auc2 > auc1 && aic2 < aic1) {
   cat("=> Both models show a trade-off. Further practical consideration is needed.\n")
 }
 
-# =====================================================================
-# [MAIN TASK] PLOT ROC CURVE SPECIFICALLY FOR MODEL 2
-# =====================================================================
+# PLOT ROC CURVE SPECIFICALLY FOR MODEL 2
 roc_plot_m2 <- ggroc(roc2, color = "#2E86C1", size = 1, legacy.axes = TRUE) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "darkgrey") +
   labs(title = "ROC Curve - Model 2 (Aspect Ratio)",
@@ -92,6 +88,7 @@ roc_plot_m2 <- ggroc(roc2, color = "#2E86C1", size = 1, legacy.axes = TRUE) +
 # Display the plot in the R environment
 print(roc_plot_m2)
 
+# Plot Combined ROC Curves for Comparison
 roc_list <- list(
   "Model 1 (Width)" = roc1,
   "Model 2 (Ratio)" = roc2
